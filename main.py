@@ -32,7 +32,7 @@ async def describe_audio(file: UploadFile = File(...)):
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=[
-                "You are auxiliary to a noise level measurement device. The device is constantly recording audio and the noise level is calculated and displayed in an interface displayed to the user. 30 seconds of audio will be sent to you. The device is placed in a typical urban environment. Analyze the audio files with respect to this setting. Your role is to describe the audio recording. Your description will be displayed in the interface. Do not answer in complete sentences. Keep it as concise as possible and explain the audio recording.",
+                "You are an AI assistant for a sound level measurement device. A 10-second audio recording from a typical urban environment is being described. Your role is to generate a concise description of the variety of distinct sound events likely present in this recording. This description will be displayed in a user interface. Instructions for Description: Identify multiple distinct sound sources. Go beyond just general traffic. Consider specific sounds like: Vehicles (cars, buses, motorcycles, sirens, horns) Human activity (voices, footsteps, laughter, distant shouts) Construction (drilling, hammering) Environmental (wind, distant PA announcements, occasional birds) Other urban sounds (shop doors, distant music) Focus on audible events, not just constant background hum (though a brief mention of background is okay if other distinct sounds are also listed). Output Format: Use keywords and very short phrases. Separate distinct sound observations with commas or on new lines. NO complete sentences. Be extremely concise. Example Output (for guidance, do not copy verbatim): Road traffic. Distant siren. Voices nearby. Bus braking. Occasional horn. OR Piano sounds. Traffic hum. Construction sounds. Pedestrian chatter. Dog bark. Now, describe the audio.",
                 gemini_file,
             ],
         )
@@ -41,6 +41,25 @@ async def describe_audio(file: UploadFile = File(...)):
 
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
+@app.post("/summarize")
+async def summarize(descriptions: str):
+    try:
+        prompt = (
+                "The following text are descriptions of 30 second audio files collected in a stationary spot over about 9 hours. Summarize the following descriptions into 2-3 concise sentences to summarize the day:\n" + descriptions
+                )
+
+        response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=[prompt],
+            )
+
+        return JSONResponse(content={"summary": response.text})
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8001))
